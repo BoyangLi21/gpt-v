@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>南蛮派对之想当玛奇玛小姐的狗</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #222; color: #eee; padding: 20px; max-width: 600px; margin: 0 auto; }
+        h2 { text-align: center; color: #ff99cc; margin-bottom: 10px; font-size: 1.5em; }
+        .card { background: #333; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); margin-bottom: 20px; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 0.9em; color: #aaa; }
+        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #555; background: #444; color: white; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        textarea { height: 100px; resize: vertical; }
+        button { width: 100%; padding: 15px; background-color: #cc6699; color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; transition: background 0.2s; }
+        button.secondary { background-color: #555; font-size: 14px; margin-top: 10px; padding: 10px; }
+        button:active { opacity: 0.8; transform: scale(0.98); }
+        button:disabled { background-color: #777; cursor: not-allowed; }
+        #audio-player { width: 100%; margin-top: 20px; }
+        .details { display: none; margin-top: 15px; border-top: 1px solid #555; padding-top: 10px; }
+        .toggle-btn { background: none; color: #888; border: none; font-size: 14px; padding: 5px; margin: 0 auto; display: block; cursor: pointer;}
+        .status { text-align: center; margin-top: 10px; font-size: 14px; color: #bbb; min-height: 20px; }
+        .model-group { border-left: 3px solid #cc6699; margin-top: 15px; background: #2a2a2a; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <h2>南蛮派对之想当玛奇玛小姐的狗 <span style="font-size:0.6em; color:#ffff00">🔒Pro</span></h2>
+
+    <div class="card">
+        <label>输入文字 (Text):</label>
+        <textarea id="text_input">今日は何をしようかな?ん?おや?</textarea>
+        
+        <button id="send_btn" onclick="generateAudio()">生成语音</button>
+        <div class="status" id="status"></div>
+        <audio id="audio-player" controls style="display:none;"></audio>
+    </div>
+
+    <button class="toggle-btn" onclick="toggleSettings('settings-panel')">⚙️ 设置 (Settings)</button>
+
+    <div class="card details" id="settings-panel">
+        <label style="color:#ff99cc">API 地址 (Ngrok URL):</label>
+        <input type="text" id="api_url" value="https://madison-unmotored-oracularly.ngrok-free.dev">
+        <small style="color:#777">填入 Ngrok 地址，不要带 /tts</small>
+
+        <label style="color:#ffff00">访问密码 (API Password):</label>
+        <input type="password" id="api_key" value="0703">
+
+        <label>电脑局域网 IP (用于模型切换):</label>
+        <input type="text" id="host_ip" value="172.20.10.6">
+
+        <label>参考音频路径:</label>
+        <input type="text" id="ref_audio_path" value="makima_ref.wav">
+        
+        <div style="display: flex; gap: 10px;">
+            <div style="flex:1">
+                <label>参考语种:</label>
+                <select id="prompt_lang">
+                    <option value="zh">中文</option>
+                    <option value="ja" selected>日语</option>
+                    <option value="en">英语</option>
+                </select>
+            </div>
+            <div style="flex:1">
+                <label>目标语种:</label>
+                <select id="text_lang">
+                    <option value="zh">中文</option>
+                    <option value="ja">日语</option>
+                    <option value="auto" selected>自动</option>
+                </select>
+            </div>
+        </div>
+
+        <label>参考文本 (Ref Text):</label>
+        <input type="text" id="prompt_text" value="今日は何をしようかな?ん?おや?">
+
+        <div style="display: flex; gap: 10px;">
+            <div style="flex:1"><label>Top K:</label><input type="number" id="top_k" value="10"></div>
+            <div style="flex:1"><label>Temp:</label><input type="number" id="temperature" value="0.9"></div>
+            <div style="flex:1"><label>Speed:</label><input type="number" id="speed" value="0.85"></div>
+        </div>
+
+        <button class="toggle-btn" onclick="toggleSettings('model-panel')" style="margin-top:20px">🔄 切换模型 (Model Switch)</button>
+        <div id="model-panel" class="details" style="display:none">
+            <div class="model-group">
+                <label>GPT 模型路径 (.ckpt):</label>
+                <input type="text" id="gpt_path" value="D:\gpt-sov\GPT-SoVITS-v2pro-20250604\GPT_weights_v2ProPlus\Makima-e15.ckpt">
+                <button class="secondary" onclick="switchModel('gpt')">切换 GPT</button>
+            </div>
+            <div class="model-group">
+                <label>SoVITS 模型路径 (.pth):</label>
+                <input type="text" id="sovits_path" value="D:\gpt-sov\GPT-SoVITS-v2pro-20250604\SoVITS_weights_v2ProPlus\Makima_e8_s112.pth">
+                <button class="secondary" onclick="switchModel('sovits')">切换 SoVITS</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 初始化：优先读取缓存，如果没有则使用HTML中的默认值
+        window.onload = function() {
+            const fields = ['api_url', 'api_key', 'host_ip', 'ref_audio_path', 'prompt_text', 'prompt_lang', 'text_lang', 'top_k', 'temperature', 'speed', 'gpt_path', 'sovits_path'];
+            fields.forEach(id => {
+                const saved = localStorage.getItem(id);
+                if (saved) document.getElementById(id).value = saved;
+            });
+        };
+
+        function toggleSettings(id) {
+            const panel = document.getElementById(id);
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function saveConfig() {
+            const fields = ['api_url', 'api_key', 'host_ip', 'ref_audio_path', 'prompt_text', 'prompt_lang', 'text_lang', 'top_k', 'temperature', 'speed', 'gpt_path', 'sovits_path'];
+            fields.forEach(id => {
+                const val = document.getElementById(id).value;
+                if(val) localStorage.setItem(id, val);
+            });
+        }
+
+        async function switchModel(type) {
+            saveConfig();
+            const host = document.getElementById('host_ip').value; 
+            const status = document.getElementById('status');
+            const path = document.getElementById(type + '_path').value;
+            
+            if (!path) return alert("请先填写模型路径！");
+
+            const endpoint = type === 'gpt' ? 'set_gpt_weights' : 'set_sovits_weights';
+            const url = `http://${host}:9880/${endpoint}?weights_path=${encodeURIComponent(path)}`;
+
+            status.innerText = `正在切换 ${type} ...`;
+
+            try {
+                const res = await fetch(url);
+                if(res.ok) {
+                    status.innerText = "切换成功！";
+                    alert(`${type.toUpperCase()} 模型切换成功！`);
+                } else {
+                    throw new Error("API返回错误");
+                }
+            } catch(e) {
+                status.innerText = "切换失败";
+                alert("切换失败：请检查电脑IP是否正确，或API窗口是否有报错。");
+            }
+        }
+
+        async function generateAudio() {
+            saveConfig();
+            const btn = document.getElementById('send_btn');
+            const status = document.getElementById('status');
+            const player = document.getElementById('audio-player');
+            const text = document.getElementById('text_input').value;
+            const apiKey = document.getElementById('api_key').value;
+            
+            let baseUrl = document.getElementById('api_url').value.replace(/\/$/, ""); 
+
+            if (!text || !baseUrl) return alert("请填写文本和 API 地址 (Ngrok)！");
+
+            const url = `${baseUrl}/tts`;
+
+            const payload = {
+                "text": text,
+                "text_lang": document.getElementById('text_lang').value,
+                "ref_audio_path": document.getElementById('ref_audio_path').value,
+                "prompt_text": document.getElementById('prompt_text').value,
+                "prompt_lang": document.getElementById('prompt_lang').value,
+                "top_k": parseInt(document.getElementById('top_k').value),
+                "temperature": parseFloat(document.getElementById('temperature').value),
+                "speed_factor": parseFloat(document.getElementById('speed').value),
+                "media_type": "wav",
+                "streaming_mode": false
+            };
+
+            btn.disabled = true;
+            btn.innerText = "生成中...";
+            status.innerText = "穿透中...";
+            player.style.display = 'none';
+
+            try {
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        // 【关键修正】这里不再用 Basic Auth，而是用 X-Password
+                        "X-Password": apiKey,
+                        "ngrok-skip-browser-warning": "true"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.status === 401) throw new Error("密码错误 (暗号不对)");
+                if (!response.ok) throw new Error("API Error: " + response.statusText);
+
+                const blob = await response.blob();
+                const audioUrl = URL.createObjectURL(blob);
+                
+                player.src = audioUrl;
+                player.style.display = 'block';
+                player.play();
+                status.innerText = "生成成功";
+            } catch (error) {
+                alert("失败：" + error.message);
+                status.innerText = "连接失败";
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "生成语音";
+            }
+        }
+    </script>
+</body>
+</html>
