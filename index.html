@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>南蛮派对之想当玛奇玛小姐的狗</title>
+    <title>我自己的声音</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #222; color: #eee; padding: 20px; max-width: 600px; margin: 0 auto; }
         h2 { text-align: center; color: #ff99cc; margin-bottom: 10px; font-size: 1.5em; }
@@ -24,11 +24,11 @@
 </head>
 <body>
 
-    <h2>南蛮派对之想当玛奇玛小姐的狗 <span style="font-size:0.6em; color:#ffff00">🔒Pro</span></h2>
+    <h2>我自己的声音 <span style="font-size:0.6em; color:#ffff00">🔒Pro</span></h2>
 
     <div class="card">
         <label>输入文字 (Text):</label>
-        <textarea id="text_input">今日は何をしようかな?ん?おや?</textarea>
+        <textarea id="text_input">我嗓子开始有点疼了</textarea>
         
         <button id="send_btn" onclick="generateAudio()">生成语音</button>
         <div class="status" id="status"></div>
@@ -55,8 +55,8 @@
             <div style="flex:1">
                 <label>参考语种:</label>
                 <select id="prompt_lang">
-                    <option value="zh">中文</option>
-                    <option value="ja" selected>日语</option>
+                    <option value="zh" selected>中文</option>
+                    <option value="ja" >日语</option>
                     <option value="en">英语</option>
                 </select>
             </div>
@@ -71,11 +71,11 @@
         </div>
 
         <label>参考文本 (Ref Text):</label>
-        <input type="text" id="prompt_text" value="今日は何をしようかな?ん?おや?">
+        <input type="text" id="prompt_text" value="不知从什么地方跑出一个人，在我背后打了一拳。">
 
         <div style="display: flex; gap: 10px;">
             <div style="flex:1"><label>Top K:</label><input type="number" id="top_k" value="10"></div>
-            <div style="flex:1"><label>Temp:</label><input type="number" id="temperature" value="0.9"></div>
+            <div style="flex:1"><label>Temp:</label><input type="number" id="temperature" value="0.85"></div>
             <div style="flex:1"><label>Speed:</label><input type="number" id="speed" value="0.85"></div>
         </div>
 
@@ -83,12 +83,12 @@
         <div id="model-panel" class="details" style="display:none">
             <div class="model-group">
                 <label>GPT 模型路径 (.ckpt):</label>
-                <input type="text" id="gpt_path" value="D:\gpt-sov\GPT-SoVITS-v2pro-20250604\GPT_weights_v2ProPlus\Makima-e15.ckpt">
+                <input type="text" id="gpt_path" value="D:\gpt-sov\GPT-SoVITS-v2pro-20250604\GPT_weights_v2Pro\Boyang2-e50.ckpt">
                 <button class="secondary" onclick="switchModel('gpt')">切换 GPT</button>
             </div>
             <div class="model-group">
                 <label>SoVITS 模型路径 (.pth):</label>
-                <input type="text" id="sovits_path" value="D:\gpt-sov\GPT-SoVITS-v2pro-20250604\SoVITS_weights_v2ProPlus\Makima_e8_s112.pth">
+                <input type="text" id="sovits_path" value="D:\gpt-sov\GPT-SoVITS-v2pro-20250604\SoVITS_weights_v2Pro\Boyang2_e8_s112.pth">
                 <button class="secondary" onclick="switchModel('sovits')">切换 SoVITS</button>
             </div>
         </div>
